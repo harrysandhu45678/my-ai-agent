@@ -1,10 +1,10 @@
 import json
 import os
-from config import MEMORY_FILE
+import re
+from config import MEMORY_FILE, OWNER_NAME
 
 
 def load_memory():
-    """Load memory from memory.json"""
     if os.path.exists(MEMORY_FILE):
         try:
             with open(MEMORY_FILE, "r") as file:
@@ -15,7 +15,6 @@ def load_memory():
 
 
 def save_memory(memory):
-    """Save memory to memory.json"""
     with open(MEMORY_FILE, "w") as file:
         json.dump(memory, file, indent=4)
 
@@ -23,12 +22,11 @@ def save_memory(memory):
 memory = load_memory()
 
 
+# -------------------------
+# Manual memory
+# -------------------------
+
 def remember(command):
-    """
-    Example:
-    remember my pet is Rocky
-    remember my city is Kurukshetra
-    """
 
     if not command.lower().startswith("remember "):
         return False
@@ -36,16 +34,71 @@ def remember(command):
     fact = command[9:]
 
     if " is " not in fact:
-        return "Please say it like:\nremember my pet is Rocky"
+        return "Please say:\nremember my pet is Rocky"
 
     key, value = fact.split(" is ", 1)
 
-    memory[key.strip().lower()] = value.strip()
+    key = key.strip().lower()
+    value = value.strip()
 
+    memory[key] = value
     save_memory(memory)
 
     return "I'll remember that."
 
+
+# -------------------------
+# Automatic memory
+# -------------------------
+
+AUTO_PATTERNS = [
+    (r"my (.+?) is (.+)", "my {}"),
+    (r"i live in (.+)", "my city"),
+    (r"i am from (.+)", "my hometown"),
+    (r"my name is (.+)", "name"),
+    (r"my birthday is (.+)", "my birthday"),
+]
+
+
+def auto_remember(command):
+
+    text = command.strip()
+
+    for pattern, key_template in AUTO_PATTERNS:
+
+        match = re.fullmatch(pattern, text, re.IGNORECASE)
+
+        if not match:
+            continue
+
+        groups = match.groups()
+
+        if "{}" in key_template:
+
+            key = key_template.format(groups[0].strip().lower())
+            value = groups[1].strip()
+
+        else:
+
+            key = key_template
+            value = groups[0].strip()
+
+        old = memory.get(key)
+
+        if old == value:
+            return None
+
+        memory[key] = value
+        save_memory(memory)
+
+        return f"I'll remember that ({key}: {value})."
+
+    return None
+
+
+# -------------------------
+# Show memory
+# -------------------------
 
 def show_memory(command):
 
@@ -57,11 +110,15 @@ def show_memory(command):
 
     text = "Here's everything I know:\n\n"
 
-    for key, value in memory.items():
+    for key, value in sorted(memory.items()):
         text += f"• {key.title()} : {value}\n"
 
     return text
 
+
+# -------------------------
+# Answer memory questions
+# -------------------------
 
 def answer_memory(command):
 
@@ -74,45 +131,47 @@ def answer_memory(command):
 
         result = "Here's what I know about you:\n\n"
 
-        for key, value in memory.items():
+        for key, value in sorted(memory.items()):
             result += f"• {key.title()} : {value}\n"
 
         return result
 
     if text == "who am i":
-        return "You are Harry."
+
+        if "name" in memory:
+            return f"You are {memory['name']}."
+
+        return f"You are {OWNER_NAME}."
+
+    if text.startswith("what is my "):
+
+        key = "my " + text.replace("what is my ", "")
+
+        if key in memory:
+            return memory[key]
+
+        return "I don't know that yet."
+
+    if text.startswith("when is my "):
+
+        key = "my " + text.replace("when is my ", "")
+
+        if key in memory:
+            return memory[key]
+
+        return "I don't know that yet."
 
     if text == "where do i live":
 
         if "my city" in memory:
             return memory["my city"]
 
-        return "I don't know where you live yet."
+        return "I don't know where you live."
 
-    if text == "when is my birthday":
+    if text.startswith("which ") and text.endswith(" do i have"):
 
-        if "my birthday" in memory:
-            return memory["my birthday"]
-
-        return "I don't know your birthday yet."
-
-    if text == "what is my pet":
-
-        if "my pet" in memory:
-            return memory["my pet"]
-
-        return "I don't know your pet yet."
-
-    if text == "which bike do i have":
-
-        if "my bike" in memory:
-            return memory["my bike"]
-
-        return "I don't know your bike yet."
-
-    if text.startswith("what is my "):
-
-        key = "my " + text.replace("what is my ", "")
+        thing = text.replace("which ", "").replace(" do i have", "")
+        key = "my " + thing
 
         if key in memory:
             return memory[key]

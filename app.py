@@ -3,69 +3,59 @@
 # ===========================
 
 from config import AI_NAME, OWNER_NAME
-from ai import ask_llama
-from memory import remember, show_memory, answer_memory
-from commands import basic_commands
+from ai import ask_ai
+from memory import (
+    remember,
+    auto_remember,
+    answer_memory,
+    show_memory
+)
+from conversation import (
+    add_message,
+    clear_history
+)
 
-print("=" * 50)
-print(f"🤖 Welcome to {AI_NAME}")
-print("=" * 50)
-print(f"Hello {OWNER_NAME}!")
-print("Type 'exit' anytime to close Juno.")
-print()
+print(f"{AI_NAME}: Hello {OWNER_NAME}! 👋")
+print("Type 'exit' to quit.")
+print("Type 'clear chat' to clear conversation.\n")
 
 while True:
-
     command = input(f"{OWNER_NAME}: ").strip()
 
-    if command == "":
+    if not command:
         continue
 
-    # -----------------------
-    # Basic Commands
-    # -----------------------
-
-    result = basic_commands(command)
-
-    if result == "EXIT":
+    if command.lower() == "exit":
         print(f"{AI_NAME}: Goodbye {OWNER_NAME}! 👋")
         break
 
+    if command.lower() == "clear chat":
+        clear_history()
+        print(f"{AI_NAME}: Conversation cleared.")
+        continue
+
+    # Long-term memory
+    if remember(command):
+        continue
+
+    result = auto_remember(command)
     if result:
         print(f"{AI_NAME}: {result}")
-        continue
-
-    # -----------------------
-    # Memory Commands
-    # -----------------------
-
-    result = remember(command)
-
-    if result:
-        print(f"{AI_NAME}: {result}")
-        continue
-
-    result = show_memory(command)
-
-    if result:
-        print(f"{AI_NAME}:")
-        print(result)
-        continue
-
     result = answer_memory(command)
-
     if result:
         print(f"{AI_NAME}: {result}")
         continue
 
-    # -----------------------
-    # AI Chat
-    # -----------------------
+    if show_memory(command):
+        continue
 
-    try:
-        reply = ask_llama(command)
-        print(f"{AI_NAME}: {reply}")
+    # Save user message
+    add_message("user", command)
 
-    except Exception as e:
-        print(f"{AI_NAME}: Error talking to Ollama.")
-        print(e)
+    # AI response
+    response = ask_ai(command)
+
+    # Save AI response
+    add_message("assistant", response)
+
+    print(f"{AI_NAME}: {response}")
