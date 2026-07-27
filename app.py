@@ -4,58 +4,72 @@
 
 from config import AI_NAME, OWNER_NAME
 from ai import ask_ai
-from memory import (
-    remember,
-    auto_remember,
-    answer_memory,
-    show_memory
-)
-from conversation import (
-    add_message,
-    clear_history
-)
+from memory import remember, answer_memory, show_memory
+from conversation import auto_remember, clear_history
+from voice import speak, listen
 
 print(f"{AI_NAME}: Hello {OWNER_NAME}! 👋")
-print("Type 'exit' to quit.")
-print("Type 'clear chat' to clear conversation.\n")
+print("Type 'text' for keyboard mode.")
+print("Type 'voice' for microphone mode.")
+print("Type 'exit' to quit.\n")
+
+mode = "text"
 
 while True:
-    command = input(f"{OWNER_NAME}: ").strip()
 
-    if not command:
-        continue
+    if mode == "text":
+        command = input(f"{OWNER_NAME}: ")
 
+        if command.lower() == "voice":
+            mode = "voice"
+            print(f"{AI_NAME}: Voice mode activated. Say 'exit' to stop voice mode.")
+            continue
+
+    else:
+        command = listen()
+
+        if command is None:
+            continue
+
+    # Exit
     if command.lower() == "exit":
-        print(f"{AI_NAME}: Goodbye {OWNER_NAME}! 👋")
+        if mode == "voice":
+            mode = "text"
+            print(f"{AI_NAME}: Switched back to text mode.")
+            continue
+
+        speak(f"Goodbye {OWNER_NAME}!")
         break
 
+    # Clear chat
     if command.lower() == "clear chat":
         clear_history()
-        print(f"{AI_NAME}: Conversation cleared.")
+        speak("Conversation cleared.")
         continue
 
-    # Long-term memory
-    if remember(command):
+    # Manual memory
+    result = remember(command)
+    if result:
+        speak(result)
         continue
 
+    # Automatic memory
     result = auto_remember(command)
     if result:
         print(f"{AI_NAME}: {result}")
+
+    # Memory questions
     result = answer_memory(command)
     if result:
-        print(f"{AI_NAME}: {result}")
+        speak(result)
         continue
 
-    if show_memory(command):
+    # Show memory
+    result = show_memory(command)
+    if result:
+        speak(result)
         continue
-
-    # Save user message
-    add_message("user", command)
 
     # AI response
-    response = ask_ai(command)
-
-    # Save AI response
-    add_message("assistant", response)
-
-    print(f"{AI_NAME}: {response}")
+    reply = ask_ai(command)
+    speak(reply)

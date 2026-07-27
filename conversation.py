@@ -19,3 +19,12 @@ def get_history():
 
 def clear_history():
     conversation.clear()
+
+
+def auto_remember(command):
+    """
+    Placeholder for automatic memory extraction.
+    Returns False if nothing should be remembered automatically.
+    We'll make this much smarter in Version 7.
+    """
+    return False
