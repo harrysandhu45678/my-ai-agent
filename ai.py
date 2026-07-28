@@ -3,37 +3,41 @@
 # ===========================
 
 import ollama
-from conversation import get_history
+from config import AI_NAME, OWNER_NAME, MODEL_NAME
 
-SYSTEM_PROMPT = """
-You are Juno, a smart, friendly personal AI assistant.
+SYSTEM_PROMPT = f"""
+You are {AI_NAME}, a friendly female personal AI assistant.
+Your owner's name is {OWNER_NAME}.
 
 Rules:
-- Be helpful and concise.
-- Remember the conversation.
-- If the user asks about previous messages, use the conversation history.
-- Don't invent personal facts.
-- Answer naturally like ChatGPT.
+- Speak naturally and briefly.
+- Never say you are ChatGPT or an AI language model.
+- If you do not know something, say so honestly.
+- Be helpful, respectful and conversational.
 """
 
-def ask_ai(user_message):
-    messages = [
-        {
-            "role": "system",
-            "content": SYSTEM_PROMPT
-        }
-    ]
+_history = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    messages.extend(get_history())
+def ask_ai(message: str) -> str:
+    global _history
 
-    messages.append({
-        "role": "user",
-        "content": user_message
-    })
+    _history.append({"role": "user", "content": message})
 
-    response = ollama.chat(
-        model="llama3.2",
-        messages=messages
-    )
+    try:
+        response = ollama.chat(
+            model=MODEL_NAME,
+            messages=_history
+        )
 
-    return response["message"]["content"]
+        reply = response["message"]["content"].strip()
+
+        _history.append({"role": "assistant", "content": reply})
+
+        # keep recent conversation only
+        if len(_history) > 21:
+            _history = [_history[0]] + _history[-20:]
+
+        return reply
+
+    except Exception as e:
+        return f"Sorry {OWNER_NAME}, I couldn't contact the AI model. Error: {e}"

@@ -2,103 +2,93 @@ import speech_recognition as sr
 import pyttsx3
 import time
 
-# ----------------------------
-# Initialize TTS
-# ----------------------------
-engine = pyttsx3.init()
+VOICE_ENABLED = False
 
+engine = pyttsx3.init()
 engine.setProperty("rate", 170)
 engine.setProperty("volume", 1.0)
 
-# ----------------------------
-# Select Female Voice
-# ----------------------------
 voices = engine.getProperty("voices")
 
 female_found = False
 
-for voice in voices:
-    name = voice.name.lower()
+for v in voices:
+    n = v.name.lower()
 
-    if (
-        "zira" in name
-        or "aria" in name
-        or "female" in name
-        or "hazel" in name
-        or "eva" in name
-        or "susan" in name
-    ):
-        engine.setProperty("voice", voice.id)
+    if any(x in n for x in ["zira", "aria", "female", "hazel", "eva", "susan"]):
+        engine.setProperty("voice", v.id)
         female_found = True
-        print(f"Female voice selected: {voice.name}")
         break
 
 if not female_found:
-    print("Female voice not found. Using default voice.")
     if voices:
         engine.setProperty("voice", voices[0].id)
 
+def enable_voice():
+    global VOICE_ENABLED
+    VOICE_ENABLED = True
 
-# ----------------------------
-# Speak
-# ----------------------------
+def disable_voice():
+    global VOICE_ENABLED
+    VOICE_ENABLED = False
+
+def voice_enabled():
+    return VOICE_ENABLED
+
 def speak(text):
+    global engine
+
     print(f"Juno: {text}")
-    engine.say(text)
-    engine.runAndWait()
 
+    if not VOICE_ENABLED:
+        return
 
-# ----------------------------
-# Listen
-# ----------------------------
-def listen():
+    try:
+        engine.stop()          # Clear anything queued
+        engine.say(str(text))
+        engine.runAndWait()
+    except Exception as e:
+        print("Speech Error:", e)
 
-    recognizer = sr.Recognizer()
-
-    recognizer.energy_threshold = 300
-    recognizer.dynamic_energy_threshold = True
-    recognizer.pause_threshold = 0.8
-
-    with sr.Microphone() as source:
-
-        print("\n🎤 Listening...")
-
-        recognizer.adjust_for_ambient_noise(source, duration=0.8)
-
+        # Recreate the engine if it gets stuck
         try:
+            engine = pyttsx3.init()
+            engine.setProperty("rate", 170)
+            engine.setProperty("volume", 1.0)
+            engine.say(str(text))
+            engine.runAndWait()
+        except Exception as e2:
+            print("Speech Restart Error:", e2)
 
-            audio = recognizer.listen(
-                source,
-                timeout=5,
-                phrase_time_limit=8
-            )
+def listen():
+    r = sr.Recognizer()
+    r.energy_threshold = 300
+    r.dynamic_energy_threshold = True
+    r.pause_threshold = 0.8
 
-            print("🧠 Recognizing...")
+    try:
+        with sr.Microphone() as source:
+            print("\\n🎤 Listening...")
+            r.adjust_for_ambient_noise(source, duration=0.5)
+            audio = r.listen(source, timeout=5, phrase_time_limit=8)
 
-            command = recognizer.recognize_google(audio)
+        print("🧠 Recognizing...")
+        text = r.recognize_google(audio).strip()
+        print(f"Harry: {text}")
+        return text
 
-            command = command.strip()
-
-            print(f"Harry: {command}")
-
-            return command
-
-        except sr.WaitTimeoutError:
-            return None
-
-        except sr.UnknownValueError:
-            print("I couldn't understand.")
-            return None
-
-        except sr.RequestError:
-            print("Internet connection required.")
-            return None
-
-        except OSError:
-            print("Microphone not available.")
-            return None
-
-        except Exception as e:
-            print(f"Voice Error: {e}")
-            time.sleep(1)
-            return None
+    except sr.WaitTimeoutError:
+        return None
+    except sr.UnknownValueError:
+        speak("Sorry, I couldn't understand.")
+        return None
+    except sr.RequestError:
+        speak("Internet connection required.")
+        return None
+    except OSError:
+        speak("Microphone not detected.")
+        return None
+    except Exception as e:
+        print("Voice Error:", e)
+        time.sleep(1)
+        return None
