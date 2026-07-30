@@ -2,51 +2,109 @@ from system.assistant import Assistant
 from brain.ai import ask_ai
 from brain.commands import process_command
 
+from voice.voice import (
+    enable_voice,
+    disable_voice,
+    voice_enabled,
+    speak,
+    listen,
+)
+
+
 assistant = Assistant()
+
+
+def reply(text):
+    if voice_enabled():
+        speak(text)
+    else:
+        print("Juno:", text)
 
 
 def start_chat():
 
     print("=================================")
-    print("        Juno Version 11")
+    print("        Juno Version 12")
     print("=================================\n")
+
+    mode = "text"
 
     while True:
 
-        command = input("Harry: ").strip()
+        # --------------------
+        # TEXT MODE
+        # --------------------
+        if mode == "text":
 
-        # Exit
+            command = input("Harry: ").strip()
+
+            if command.lower() == "voice":
+                mode = "voice"
+                enable_voice()
+                speak("Voice mode activated.")
+                continue
+
+        # --------------------
+        # VOICE MODE
+        # --------------------
+        else:
+
+            command = listen()
+
+            if command is None:
+                continue
+
+            if command.lower() == "text mode":
+                disable_voice()
+                mode = "text"
+                print("Juno: Switched to text mode.")
+                continue
+
+        command = command.strip()
+
+        # --------------------
+        # EXIT
+        # --------------------
         if command.lower() == "exit":
-            print("Juno: Goodbye Harry!")
+
+            reply("Goodbye Harry!")
+
             break
 
-        # Sleep
+        # --------------------
+        # Assistant commands
+        # --------------------
         if command.lower() == "sleep":
-            print("Juno:", assistant.sleep())
+            assistant.sleep()
             continue
 
-        # Wake
         if command.lower() == "wake up":
-            print("Juno:", assistant.wake())
+            assistant.wake()
             continue
 
-        # Status
         if command.lower() == "status":
-            print("Juno:", assistant.status())
+            assistant.status()
             continue
 
-        # Ignore commands while sleeping
         if not assistant.is_awake():
-            print("Juno: I'm sleeping. Say 'wake up' to wake me.")
+
+            reply("I'm sleeping. Say wake up.")
+
             continue
 
-        # Built-in commands
+        # --------------------
+        # Memory Commands
+        # --------------------
         result = process_command(command)
 
         if result:
-            print("Juno:", result)
+            reply(result)
             continue
 
-        # AI Chat
-        reply = ask_ai(command)
-        print("Juno:", reply)
+                # --------------------
+        # AI
+        # --------------------
+
+        response = ask_ai(command)
+
+        reply(response)
