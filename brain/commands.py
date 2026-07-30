@@ -1,11 +1,52 @@
 from brain.memory import remember, recall, forget, list_memories
+from brain.memory_manager import auto_remember
+
+from actions.system_actions import (
+    open_vscode,
+    open_notepad,
+    open_calculator,
+    open_website,
+)
 
 
 def process_command(command):
-    command = command.strip()
 
-    # Remember
-    if command.lower().startswith("remember "):
+    command = command.strip()
+    lower = command.lower()
+
+    # --------------------------
+    # Automatic Memory
+    # --------------------------
+
+    auto = auto_remember(command)
+
+    if auto:
+        return auto
+
+    # --------------------------
+    # Desktop Actions
+    # --------------------------
+
+    if lower == "open vscode":
+        return open_vscode()
+
+    if lower == "open notepad":
+        return open_notepad()
+
+    if lower == "open calculator":
+        return open_calculator()
+
+    if lower == "open youtube":
+        return open_website("https://www.youtube.com")
+
+    if lower == "open google":
+        return open_website("https://www.google.com")
+
+    # --------------------------
+    # Manual Remember
+    # --------------------------
+
+    if lower.startswith("remember "):
 
         text = command[9:]
 
@@ -18,10 +59,27 @@ def process_command(command):
 
         return f"I'll remember that {key.strip()} is {value.strip()}."
 
+    # --------------------------
     # Recall
-    if command.lower().startswith("what is "):
+    # --------------------------
 
+    key = None
+
+    if lower.startswith("what is "):
         key = command[8:].strip()
+
+    elif lower.startswith("what's "):
+        key = command[7:].strip()
+
+    elif lower.startswith("do you remember "):
+        key = command[16:].strip()
+
+    elif lower.startswith("can you tell me "):
+        key = command[16:].strip()
+
+    if key:
+
+        key = key.replace("?", "").strip()
 
         value = recall(key)
 
@@ -30,8 +88,11 @@ def process_command(command):
 
         return f"I don't remember {key}."
 
+    # --------------------------
     # Forget
-    if command.lower().startswith("forget "):
+    # --------------------------
+
+    if lower.startswith("forget "):
 
         key = command[7:].strip()
 
@@ -40,8 +101,11 @@ def process_command(command):
 
         return f"I don't remember {key}."
 
-    # Show memories
-    if command.lower() == "show memories":
+    # --------------------------
+    # Show Memories
+    # --------------------------
+
+    if lower == "show memories":
 
         memory = list_memories()
 

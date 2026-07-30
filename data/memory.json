@@ -1,5 +1,14 @@
 {
     "favorite food": {
         "value": "pizza"
+    },
+    "my favorite bike": {
+        "value": "kawasaki"
+    },
+    "likes": {
+        "value": "pizza"
+    },
+    "my favorite game": {
+        "value": "minecraft"
     }
 }
