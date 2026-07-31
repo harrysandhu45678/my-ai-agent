@@ -1,12 +1,8 @@
 from brain.memory import remember, recall, forget, list_memories
 from brain.memory_manager import auto_remember
 
-from actions.system_actions import (
-    open_vscode,
-    open_notepad,
-    open_calculator,
-    open_website,
-)
+from actions.system_actions import open_app, open_website
+from actions.app_manager import learn_app
 
 
 def process_command(command):
@@ -24,23 +20,42 @@ def process_command(command):
         return auto
 
     # --------------------------
+    # Learn Application
+    # --------------------------
+
+    if lower.startswith("learn app "):
+
+        text = command[10:].strip()
+
+        parts = text.split(" ", 1)
+
+        if len(parts) != 2:
+            return "Use: learn app <name> <path>"
+
+        app_name = parts[0]
+        app_path = parts[1]
+
+        return learn_app(app_name, app_path)
+
+    # --------------------------
     # Desktop Actions
     # --------------------------
 
-    if lower == "open vscode":
-        return open_vscode()
+    if lower.startswith("open "):
 
-    if lower == "open notepad":
-        return open_notepad()
+        item = command[5:].strip()
 
-    if lower == "open calculator":
-        return open_calculator()
+        # Websites
+        if item.lower() in [
+            "google",
+            "youtube",
+            "github",
+            "chatgpt",
+        ]:
+            return open_website(item)
 
-    if lower == "open youtube":
-        return open_website("https://www.youtube.com")
-
-    if lower == "open google":
-        return open_website("https://www.google.com")
+        # Applications
+        return open_app(item)
 
     # --------------------------
     # Manual Remember
