@@ -1,15 +1,13 @@
-# brain/conversation.py
-
-MAX_HISTORY = 20
+# ==========================
+# Conversation Manager
+# ==========================
 
 conversation = []
 
+MAX_HISTORY = 20
 
-def add_message(role, content):
-    """
-    Add a message to the conversation history.
-    role: "user" or "assistant"
-    """
+
+def add(role, content):
 
     conversation.append({
         "role": role,
@@ -20,17 +18,9 @@ def add_message(role, content):
         conversation.pop(0)
 
 
-def get_history():
-    """
-    Return conversation history.
-    """
-
+def history():
     return conversation.copy()
 
 
-def clear_history():
-    """
-    Clear conversation.
-    """
-
+def clear():
     conversation.clear()

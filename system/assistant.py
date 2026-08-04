@@ -1,9 +1,8 @@
 class Assistant:
+
     def __init__(self):
         self.awake = True
-
-    def is_awake(self):
-        return self.awake
+        self.busy = False
 
     def sleep(self):
         self.awake = False
@@ -11,9 +10,19 @@ class Assistant:
 
     def wake(self):
         self.awake = True
-        return "I'm awake now."
+        return "I'm awake."
+
+    def is_awake(self):
+        return self.awake
+
+    def is_busy(self):
+        return self.busy
+
+    def set_busy(self, value):
+        self.busy = value
 
     def status(self):
         if self.awake:
-            return "I'm awake."
-        return "I'm sleeping."
+            return "Awake"
+
+        return "Sleeping"
