@@ -3,54 +3,32 @@
 # Desktop Actions
 # ==========================
 
-import subprocess
-import webbrowser
+from system.apps import open_app
+from system.websites import open_website
+from system.folders import open_folder
 
 
 def execute_action(command):
 
-    cmd = command.lower().strip()
+    text = command.lower().strip()
 
-    # -------------------------
-    # Applications
-    # -------------------------
+    if text.startswith("open "):
 
-    apps = {
-        "open calculator": "calc",
-        "open notepad": "notepad",
-        "open paint": "mspaint",
-        "open command prompt": "cmd",
-        "open file explorer": "explorer",
-        "open explorer": "explorer",
-    }
+        target = text.replace("open ", "", 1)
 
-    if cmd in apps:
-        subprocess.Popen(apps[cmd], shell=True)
-        return f"Opening {cmd.replace('open ', '').title()}."
+        result = open_app(target)
 
-    # VS Code
-    if cmd in ["open vscode", "open vs code"]:
-        subprocess.Popen("code", shell=True)
-        return "Opening VS Code."
+        if result:
+            return result
 
-    # Chrome
-    if cmd == "open chrome":
-        subprocess.Popen("start chrome", shell=True)
-        return "Opening Chrome."
+        result = open_website(target)
 
-    # -------------------------
-    # Websites
-    # -------------------------
+        if result:
+            return result
 
-    websites = {
-        "open google": "https://google.com",
-        "open youtube": "https://youtube.com",
-        "open github": "https://github.com",
-        "open gmail": "https://mail.google.com",
-    }
+        result = open_folder(target)
 
-    if cmd in websites:
-        webbrowser.open(websites[cmd])
-        return f"Opening {cmd.replace('open ', '').title()}."
+        if result:
+            return result
 
     return None
