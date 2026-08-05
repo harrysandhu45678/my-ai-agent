@@ -4,7 +4,7 @@
 
 conversation = []
 
-MAX_HISTORY = 20
+from system.config import MAX_HISTORY
 
 
 def add(role, content):

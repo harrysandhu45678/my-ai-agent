@@ -1,7 +1,7 @@
 import json
 import os
 
-MEMORY_FILE = "data/memory.json"
+from system.config import MEMORY_FILE
 
 
 def load():
