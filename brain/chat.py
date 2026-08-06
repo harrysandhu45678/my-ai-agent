@@ -88,6 +88,8 @@ def start_chat():
         # Intent Engine
         # -------------------------
 
-        response = process_intent(command)
+        from brain.intents import handle
+
+        response = handle(command)
 
         reply(response)

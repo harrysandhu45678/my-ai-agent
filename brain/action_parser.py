@@ -1,50 +1,71 @@
 # ==========================
-# Juno Version 14
+# Juno Version 15
 # Natural Action Parser
 # ==========================
 
-ACTION_PATTERNS = [
-
+ACTION_WORDS = [
     "open",
     "launch",
     "start",
     "run",
-
 ]
 
 
 def parse_action(command):
 
-    text = command.lower()
+    text = command.lower().strip()
 
-    for action in ACTION_PATTERNS:
+    # Remove punctuation
+    for ch in ["?", ".", "!", ","]:
+        text = text.replace(ch, "")
 
-        if action in text:
+    words = text.split()
 
-            words = text.split()
+    for action in ACTION_WORDS:
 
-            if action in words:
+        if action in words:
 
-                index = words.index(action)
+            index = words.index(action)
 
-                if index + 1 < len(words):
+            if index + 1 < len(words):
 
-                    target = " ".join(words[index + 1:])
+                target = " ".join(words[index + 1:])
 
-                    # Remove common filler words
-                    fillers = [
-                        "the",
-                        "my",
-                        "a",
-                        "an",
-                        "please",
-                    ]
+                # Remove filler words
+                fillers = [
+                    "the",
+                    "my",
+                    "a",
+                    "an",
+                    "please",
+                ]
 
-                    target_words = [
-                        w for w in target.split()
-                        if w not in fillers
-                    ]
+                target = " ".join(
+                    word for word in target.split()
+                    if word not in fillers
+                )
 
-                    return "open " + " ".join(target_words)
+                return {
+                    "intent": "action",
+                    "text": f"open {target}"
+                }
 
-    return command
+    # Natural recall
+    if text.startswith(("what", "where", "who", "when")):
+        return {
+            "intent": "recall",
+            "text": text
+        }
+
+    # Automatic memory
+    if text.startswith(("my", "i am", "i'm", "i live")):
+        return {
+            "intent": "memory",
+            "text": text
+        }
+
+    # Default to AI
+    return {
+        "intent": "ai",
+        "text": text
+    }
